@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth.models import User
+from .serializers import CustomAuthTokenSerializer
 # Create your views here.
 
 
@@ -16,6 +17,7 @@ class SignupAPIView(APIView):
         username=request.data.get('username')
         email=request.data.get('email')
         password=request.data.get('password')
+        
 
         # check if all required fields are provided
         if not username or not password or not email:
@@ -29,7 +31,7 @@ class SignupAPIView(APIView):
         user=User.objects.create_user(username=username,email=email,password=password)
 
 
-        # Generate anew token for each user
+        # Generate a new token for each user
 
         token,created=Token.objects.get_or_create(user=user)
 
@@ -41,8 +43,10 @@ class SignupAPIView(APIView):
 
 
 class CustomAuthToken(ObtainAuthToken):
-    def post(self,request,*args,**kwargs):
-        serializer = self.get_serializer(data=request.data,context={'request': request})
+
+    serializer_class=CustomAuthTokenSerializer
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
         token,created = Token.objects.get_or_create(user=user)
